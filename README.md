@@ -101,6 +101,7 @@ Follow these steps to set up and run the AI Code Generator on your local machine
 ├── main.py             \# Flask backend application
 ├── index.html          \# Frontend HTML and JavaScript
 ├── requirements.txt    \# Python dependencies
+├── LICENSE             \# Project License
 └── README.md           \# Project README file
 
 ```
