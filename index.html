@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generator Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        #header {
+            background-color: #2196f3;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        #main-content {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        #chat-area {
+            flex: 2;
+            padding: 16px;
+            overflow-y: auto;
+            background-color: #e3f2fd;
+            border-right: 1px solid #bbdefb;
+            display: flex;
+            flex-direction: column;
+        }
+        #code-details-area {
+            flex: 1;
+            padding: 16px;
+            background-color: #ffffff;
+            overflow-y: auto;
+            border-left: 1px solid #bbdefb;
+        }
+        .message-container {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .user-message {
+            background-color: #bbdefb;
+            color: #333;
+            padding: 10px 14px;
+            border-radius: 8px;
+            align-self: flex-end;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .bot-code-block {
+            background-color: #e0f2f7;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            align-self: flex-start;
+            max-width: 80%;
+            word-wrap: break-word;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .bot-code-block:hover {
+            background-color: #c0e0eb;
+        }
+        .bot-code-block pre {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .filename-display {
+            font-size: 0.85em;
+            color: #4CAF50;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .save-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s;
+            align-self: flex-end;
+        }
+        .save-button:hover {
+            background-color: #388E3C;
+        }
+        .save-button:active {
+            transform: scale(0.98);
+        }
+        #input-area {
+            display: flex;
+            padding: 16px;
+            border-top: 1px solid #bbdefb;
+            background-color: #ffffff;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        #user-input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        #send-button {
+            background-color: #2196f3;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            margin-left: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s;
+        }
+        #send-button:hover {
+            background-color: #1976d2;
+        }
+        #send-button:active {
+            transform: scale(0.98);
+        }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: #2196f3;
+            font-weight: 600;
+        }
+        .details-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #e3f2fd;
+            border-radius: 6px;
+        }
+        .details-item strong {
+            color: #2196f3;
+        }
+        .details-item pre {
+            background-color: #f0f4f8;
+            border: 1px solid #cceeff;
+            padding: 8px;
+            margin-top: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        @media (max-width: 768px) {
+            #app-container {
+                height: 98vh;
+                margin: 1vh;
+            }
+            #main-content {
+                flex-direction: column;
+            }
+            #chat-area, #code-details-area {
+                border-right: none;
+                border-left: none;
+                border-bottom: 1px solid #bbdefb;
+            }
+            #code-details-area {
+                height: 300px;
+                flex-basis: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="header">
+            Code Generator Chatbot
+        </div>
+        <div id="main-content">
+            <div id="chat-area">
+                <div class="message-container">
+                    <div class="bot-code-block" data-generation-index="0">
+                        <pre>Hello! Type your request to generate code. For example: "Generate a simple Python function to calculate factorial."</pre>
+                        <button class="save-button" data-code="Hello! Type your request to generate code. For example: 'Generate a simple Python function to calculate factorial.'" data-filename="welcome.txt">Save Code</button>
+                    </div>
+                </div>
+            </div>
+            <div id="code-details-area">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">Code Details</h3>
+                <div id="details-content">
+                    <p class="text-gray-500">Click on a generated code in the chat to see its details here.</p>
+                </div>
+            </div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type your code request...">
+            <button id="send-button">Generate Code</button>
+        </div>
+        <div id="loading-indicator" class="loading-indicator">Generating code...</div>
+    </div>
+    <script>
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const chatArea = document.getElementById('chat-area');
+        const codeDetailsArea = document.getElementById('details-content');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        let generatedResponsesHistory = [];
+
+        function saveCodeToFile(codeContent, filename) {
+            const blob = new Blob([codeContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function displayUserMessage(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message-container');
+            messageDiv.classList.add('justify-end');
+            const textDiv = document.createElement('div');
+            textDiv.classList.add('user-message');
+            textDiv.textContent = message;
+            messageDiv.appendChild(textDiv);
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function displayBotGeneratedContent(responseObject, generationIndex) {
+            const messageContainerDiv = document.createElement('div');
+            messageContainerDiv.classList.add('message-container');
+
+            responseObject.files.forEach(file => {
+                const codeBlockDiv = document.createElement('div');
+                codeBlockDiv.classList.add('bot-code-block');
+                codeBlockDiv.dataset.generationIndex = generationIndex;
+                
+                const filenameSpan = document.createElement('span');
+                filenameSpan.classList.add('filename-display');
+                filenameSpan.textContent = file.suggested_filename || "untitled";
+                codeBlockDiv.appendChild(filenameSpan);
+
+                const codePre = document.createElement('pre');
+                codePre.textContent = file.code;
+                codeBlockDiv.appendChild(codePre);
+
+                const saveBtn = document.createElement('button');
+                saveBtn.classList.add('save-button');
+                saveBtn.textContent = 'Save Code';
+                saveBtn.onclick = () => saveCodeToFile(file.code, file.suggested_filename || 'code.txt');
+                codeBlockDiv.appendChild(saveBtn);
+
+                codeBlockDiv.onclick = (event) => {
+                    if (!event.target.classList.contains('save-button')) {
+                        displayCodeDetails(generatedResponsesHistory[generationIndex].overall_details);
+                    }
+                };
+
+                messageContainerDiv.appendChild(codeBlockDiv);
+            });
+
+            chatArea.appendChild(messageContainerDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+
+        function displayCodeDetails(details) {
+            codeDetailsArea.innerHTML = '';
+
+            const addDetail = (label, value) => {
+                if (value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && value.length === 0)) {
+                    const div = document.createElement('div');
+                    div.classList.add('details-item');
+                    if (label === 'Input/Output Examples' || label === 'Usage Instructions' || label === 'Error Handling Details' || label === 'Assumptions') {
+                        div.innerHTML = `<strong>${label}:</strong><pre>${value}</pre>`;
+                    } else if (Array.isArray(value)) {
+                        div.innerHTML = `<strong>${label}:</strong> ${value.join(', ')}`;
+                    } else {
+                        div.innerHTML = `<strong>${label}:</strong> ${value}`;
+                    }
+                    codeDetailsArea.appendChild(div);
+                }
+            };
+
+            if (!details || Object.keys(details).length === 0) {
+                codeDetailsArea.innerHTML = '<p class="text-gray-500">No specific details available for this code.</p>';
+                return;
+            }
+
+            addDetail('Language', details.language);
+            addDetail('Lines of Code', details.lines);
+            addDetail('Time Complexity', details.complexity);
+            addDetail('Space Complexity', details.space_complexity);
+            addDetail('Purpose', details.purpose);
+            addDetail('Dependencies', details.dependencies);
+            addDetail('File Extension', details.file_extension);
+            addDetail('Number of Functions/Classes', details.num_functions_classes);
+            addDetail('Error Handling Details', details.error_handling_details);
+            addDetail('Assumptions', details.assumptions);
+            addDetail('Best Practices Followed', details.best_practices_followed ? 'Yes' : 'No');
+            addDetail('Target Environment', details.target_environment);
+            addDetail('Input/Output Examples', details.input_output_examples);
+            addDetail('Usage Instructions', details.usage_instructions);
+
+            if (codeDetailsArea.children.length === 0) {
+                codeDetailsArea.innerHTML = '<p class="text-gray-500">No specific details available for this code.</p>';
+            }
+        }
+
+        async function generateCode() {
+            const prompt = userInput.value.trim();
+            if (!prompt) return;
+
+            displayUserMessage(prompt);
+            userInput.value = '';
+            loadingIndicator.style.display = 'block';
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch('http://127.0.0.1:8080/generate-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: prompt }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate code.');
+                }
+
+                const data = await response.json();
+
+                const currentGenerationIndex = generatedResponsesHistory.length;
+                generatedResponsesHistory.push(data);
+
+                displayBotGeneratedContent(data, currentGenerationIndex);
+
+                displayCodeDetails(data.overall_details);
+
+            } catch (error) {
+                console.error('Error:', error);
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message-container');
+                messageDiv.classList.add('justify-start');
+                const textDiv = document.createElement('div');
+                textDiv.classList.add('bot-code-block');
+                textDiv.style.backgroundColor = '#ffe0e0';
+                textDiv.style.color = '#d32f2f';
+                textDiv.style.cursor = 'default';
+                textDiv.textContent = `Error: ${error.message}. Please ensure the Python backend is running and your API key is valid. Check the browser console for more details.`;
+                messageDiv.appendChild(textDiv);
+                chatArea.appendChild(messageDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+                codeDetailsArea.innerHTML = '<p class="text-red-500">Error retrieving or generating details.</p>';
+            } finally {
+                loadingIndicator.style.display = 'none';
+                sendButton.disabled = false;
+            }
+        }
+
+        sendButton.addEventListener('click', generateCode);
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                generateCode();
+            }
+        });
+
+        const initialBotMessageDiv = chatArea.querySelector('.bot-code-block[data-generation-index="0"]');
+        if (initialBotMessageDiv) {
+            generatedResponsesHistory.push({
+                files: [
+                    {
+                        code: initialBotMessageDiv.querySelector('pre').textContent,
+                        language: 'text',
+                        suggested_filename: 'welcome.txt'
+                    }
+                ],
+                overall_details: {
+                    purpose: "Welcome message for the code generator chatbot.",
+                    language: "Informational",
+                    lines: 1,
+                    complexity: "N/A",
+                    space_complexity: "N/A",
+                    dependencies: [],
+                    file_extension: ".txt",
+                    input_output_examples: "None",
+                    usage_instructions: "This is a welcome message; no usage instructions.",
+                    num_functions_classes: 0,
+                    error_handling_details: "None",
+                    assumptions: "User is new to the chatbot.",
+                    best_practices_followed: true,
+                    target_environment: "User Interface"
+                }
+            });
+        }
+    </script>
+</body>
+</html>
